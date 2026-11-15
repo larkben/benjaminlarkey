@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 410" fill="none">
+  <rect width="640" height="410" fill="#EDF2F0"/>
+  <circle cx="110" cy="325" r="130" fill="#DFEAE5"/>
+  <path d="M185 206h270M320 127v158M185 206l135-79M455 206 320 285" stroke="#A7C7B8" stroke-width="4" stroke-dasharray="7 9"/>
+  <rect x="60" y="160" width="150" height="92" rx="10" fill="#FAFCFB" stroke="#C9DCD2" stroke-width="2"/>
+  <rect x="245" y="78" width="150" height="92" rx="10" fill="#FAFCFB" stroke="#C9DCD2" stroke-width="2"/>
+  <rect x="430" y="160" width="150" height="92" rx="10" fill="#FAFCFB" stroke="#C9DCD2" stroke-width="2"/>
+  <rect x="245" y="242" width="150" height="92" rx="10" fill="#FAFCFB" stroke="#C9DCD2" stroke-width="2"/>
+  <circle cx="135" cy="190" r="10" fill="#558F72"/><circle cx="320" cy="108" r="10" fill="#558F72"/><circle cx="505" cy="190" r="10" fill="#558F72"/><circle cx="320" cy="272" r="10" fill="#558F72"/>
+  <path d="M115 217h70M300 135h40M485 217h40M300 299h50" stroke="#9CB7A8" stroke-width="6" stroke-linecap="round"/>
+  <path d="M118 233h48M303 151h56M488 233h40M303 315h37" stroke="#D0DED5" stroke-width="5" stroke-linecap="round"/>
+</svg>

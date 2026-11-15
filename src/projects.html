@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fafbf9" />
+    <title>Projects — Benjamin Larkey</title>
+    <script>try { const savedTheme = localStorage.getItem("theme"); if (savedTheme) document.documentElement.dataset.theme = savedTheme; } catch {}</script>
+    <style>
+      :root { color-scheme: light; --ink: #202c2a; --muted: #687773; --accent: #0066cc; --red: #d93645; --paper: #fafbf9; --line: #e2e8e4; --surface: #fff; }
+      :root[data-theme="dark"] { color-scheme: dark; --ink: #ecf3fb; --muted: #a5b2c0; --accent: #59a6ff; --red: #ff6675; --paper: #101923; --line: #2a3948; --surface: #172431; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      a { color: inherit; }
+      .page { width: min(100% - 40px, 860px); margin: 0 auto; }
+      header { display: flex; align-items: center; justify-content: space-between; padding: 26px 0; border-bottom: 1px solid var(--line); }
+      .brand { font-weight: 700; letter-spacing: -.03em; text-decoration: none; }
+      nav { display: flex; gap: 24px; color: var(--muted); font-size: .92rem; }
+      .theme-toggle { padding: 7px 10px; border: 1px solid var(--line); border-radius: 5px; background: transparent; color: var(--ink); font: inherit; font-size: .82rem; cursor: pointer; }
+      .theme-toggle:hover { background: var(--surface); }
+      nav a { text-decoration: none; }
+      nav a:hover, .back:hover { color: var(--red); }
+      main { padding: 70px 0 84px; }
+      .back { color: var(--muted); font-size: .9rem; text-decoration: none; }
+      h1 { margin: 24px 0 8px; font-size: clamp(2.6rem, 7vw, 4rem); line-height: 1.05; }
+      h1::after { display: block; width: 42px; height: 3px; margin-top: 16px; background: linear-gradient(90deg, var(--accent) 0 72%, var(--red) 72%); content: ""; }
+      .intro { max-width: 570px; margin: 0; color: var(--muted); }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 24px; margin-top: 42px; }
+      .project { text-decoration: none; }
+      .project img { display: block; width: 100%; aspect-ratio: 1.55; object-fit: cover; border: 1px solid var(--line); border-radius: 5px; background: #edf3f0; transition: transform .2s ease; }
+      .project:hover img { transform: translateY(-3px); border-color: var(--accent); }
+      .project h2 { margin: 12px 0 0; font-size: 1rem; font-weight: 650; }
+      .project:hover h2 { color: var(--accent); }
+      .project p { margin: 2px 0 0; color: var(--muted); font-size: .86rem; }
+      footer { padding: 22px 0 35px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+      @media (max-width: 600px) { .page { width: min(100% - 32px, 860px); } header { align-items: flex-start; gap: 18px; flex-direction: column; } nav { gap: 18px; } main { padding: 52px 0 64px; } .grid { gap: 24px 14px; } }
+      @media (max-width: 430px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <a class="brand" href="/">Benjamin Larkey</a>
+        <nav aria-label="Main navigation">
+          <a href="/projects" aria-current="page">Projects</a>
+          <a href="/#experience">Experience</a>
+          <a href="/#education">Education</a>
+          <button class="theme-toggle" type="button" aria-label="Switch color theme">☾ Dark mode</button>
+        </nav>
+      </header>
+      <main>
+        <a class="back" href="/">← Back to resume</a>
+        <h1>Projects</h1>
+        <p class="intro">Small tools and experiments around healthcare data, interoperability, and the systems behind care.</p>
+        <div class="grid">
+          <!-- Replace each sample title, image, and GitHub URL with one of your projects. -->
+          <a class="project" href="https://github.com/larkben/your-fhir-project" target="_blank" rel="noreferrer">
+            <img src="/images/fhir-project.svg" alt="Abstract FHIR resource diagram" />
+            <h2>FHIR Resource Explorer</h2>
+            <p>FHIR · API tooling</p>
+          </a>
+          <a class="project" href="https://github.com/larkben/your-hl7-project" target="_blank" rel="noreferrer">
+            <img src="/images/hl7-project.svg" alt="Abstract HL7 message illustration" />
+            <h2>HL7 Message Toolkit</h2>
+            <p>HL7 v2 · Utilities</p>
+          </a>
+          <a class="project" href="https://github.com/larkben/your-interface-project" target="_blank" rel="noreferrer">
+            <img src="/images/interface-project.svg" alt="Abstract connected clinical systems illustration" />
+            <h2>Interface Mapping Notes</h2>
+            <p>Interoperability · Reference</p>
+          </a>
+        </div>
+      </main>
+      <footer>© 2026 Benjamin Larkey</footer>
+    </div>
+    <script src="/theme.js" defer></script>
+  </body>
+</html>

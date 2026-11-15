@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fafbf9" />
+    <title>Benjamin Larkey — Resume</title>
+    <script>try { const savedTheme = localStorage.getItem("theme"); if (savedTheme) document.documentElement.dataset.theme = savedTheme; } catch {}</script>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #202c2a;
+        --muted: #687773;
+        --accent: #0066cc;
+        --racing-red: #d93645;
+        --paper: #fafbf9;
+        --line: #e2e8e4;
+        --surface: #ffffff;
+        color-scheme: light;
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --ink: #ecf3fb;
+        --muted: #a5b2c0;
+        --accent: #59a6ff;
+        --racing-red: #ff6675;
+        --paper: #101923;
+        --line: #2a3948;
+        --surface: #172431;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      a { color: inherit; }
+      .page { width: min(100% - 40px, 860px); margin: 0 auto; }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 26px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand { font-weight: 700; letter-spacing: -.03em; text-decoration: none; }
+      nav { display: flex; gap: 24px; color: var(--muted); font-size: .92rem; }
+      .theme-toggle { padding: 7px 10px; border: 1px solid var(--line); border-radius: 5px; background: transparent; color: var(--ink); font: inherit; font-size: .82rem; cursor: pointer; }
+      .theme-toggle:hover { background: var(--surface); }
+      nav a { text-decoration: none; }
+      nav a:hover, .contact a:hover { color: var(--racing-red); }
+      main { padding: 96px 0 82px; }
+      .eyebrow { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: .78rem; font-weight: 600; letter-spacing: .04em; }
+      .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 4px 0 0 -1px var(--racing-red); }
+      h1 { max-width: 700px; margin: 18px 0; font-size: clamp(2.8rem, 8vw, 5rem); line-height: 1.02; }
+      h1::after { display: block; width: 42px; height: 3px; margin-top: 18px; background: linear-gradient(90deg, var(--accent) 0 72%, var(--racing-red) 72%); content: ""; }
+      h1 span { color: var(--accent); }
+      .intro { max-width: 620px; color: var(--muted); font-size: 1.08rem; }
+      .contact { display: flex; flex-wrap: wrap; gap: 12px 22px; margin-top: 25px; font-size: .93rem; }
+      .contact a { text-decoration-color: var(--line); text-underline-offset: 4px; }
+      section { display: grid; grid-template-columns: 180px 1fr; gap: 28px; padding: 30px 0; border-top: 1px solid var(--line); }
+      .post-list { display: grid; gap: 16px; }
+      .post-link { text-decoration: none; }
+      .post-link:hover h3 { color: var(--accent); }
+      .post-link h3 { margin: 0; font-size: 1rem; }
+      .post-link p { margin: 3px 0 0; color: var(--muted); font-size: .9rem; }
+      .all-posts { display: inline-block; margin-top: 18px; color: var(--accent); font-size: .9rem; text-underline-offset: 4px; }
+      h2 { margin: 0; font-size: .82rem; letter-spacing: .12em; text-transform: uppercase; }
+      .entry + .entry { margin-top: 28px; }
+      .entry h3 { margin: 0; font-size: 1.08rem; }
+      .meta { margin: 2px 0 10px; color: var(--muted); font-size: .9rem; }
+      .entry p { margin: 0; color: var(--muted); }
+      .skills { display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--muted); font-size: .92rem; }
+      .tag { color: var(--ink); }
+      footer { padding: 22px 0 35px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+      @media (max-width: 600px) {
+        .page { width: min(100% - 32px, 900px); }
+        header { align-items: flex-start; gap: 18px; flex-direction: column; }
+        nav { gap: 18px; }
+        main { padding: 56px 0 64px; }
+        section { grid-template-columns: 1fr; gap: 14px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <a class="brand" href="#top">Benjamin Larkey</a>
+        <nav aria-label="Main navigation">
+          <a href="/projects">Projects</a>
+          <a href="#blog">Blog</a>
+          <a href="#experience">Experience</a>
+          <a href="#education">Education</a>
+          <a href="#contact">Contact</a>
+          <button class="theme-toggle" type="button" aria-label="Switch color theme">☾ Dark mode</button>
+        </nav>
+      </header>
+
+      <main id="top">
+        <div>
+          <p class="eyebrow"><span class="pulse" aria-hidden="true"></span>Healthcare Data · Building Systems</p>
+          <h1>Benjamin Larkey</h1>
+          <p class="intro">I work with healthcare data and the systems that move it—connecting clinical workflows through standards like HL7 and FHIR.</p>
+          <div class="contact" id="contact">
+            <a href="mailto:benlarkey03@gmail.com">benlarkey03@gmail.com</a>
+            <a href="https://www.linkedin.com/in/benjamin-larkey-14a0b51b9/">LinkedIn</a>
+            <a href="https://github.com/larkben">GitHub</a>
+          </div>
+        </div>
+      </main>
+
+      <section id="skills">
+        <h2>Focus areas</h2>
+        <div class="skills">
+          <span class="tag">HL7 v2</span><span class="tag">FHIR</span><span class="tag">Architecture Strategy</span><span class="tag">Clinical Workflows</span><span class="tag">Cloverleaf</span>
+        </div>
+      </section>
+
+      <section id="blog">
+        <h2>Writing</h2>
+        <div>
+          <!-- BLOG_FEED -->
+        </div>
+      </section>
+
+      <section id="experience">
+        <h2>Experience</h2>
+        <div>
+          <article class="entry">
+            <h3>Epic Applications Analyst / HL7 Engineer · CGH Medical Center</h3>
+            <p class="meta">2024 — Present · Sterling</p>
+            <p>...</p>
+          </article>
+          <article class="entry">
+            <h3>IT Tech Support · CGH Medical Center</h3>
+            <p class="meta">2023 — 2024 · Sterling</p>
+            <p>...</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="education">
+        <h2>Education</h2>
+        <div class="entry">
+          <h3>Software Development / Software Engineering (Bachelors of Science)</h3>
+          <p class="meta">Northern Illinois University · 2024</p>
+        </div>
+      </section>
+      <section id="education">
+        <h2>Education</h2>
+        <div class="entry">
+          <h3>Computer Science Info Track (Associates of Science)</h3>
+          <p class="meta">Sauk Valley College · 2022</p>
+        </div>
+      </section>
+
+      <footer>© 2026 Benjamin Larkey</footer>
+    </div>
+    <script src="/theme.js" defer></script>
+  </body>
+</html>
