@@ -65,6 +65,11 @@ async fn theme_script() -> impl Responder {
         .body(include_str!("theme.js"))
 }
 
+#[get("/health")]
+async fn health() -> impl Responder {
+    HttpResponse::Ok().json(true)
+}
+
 #[get("/images/fhir-project.svg")]
 async fn fhir_image() -> impl Responder {
     HttpResponse::Ok().content_type("image/svg+xml").body(include_str!("images/fhir-project.svg"))
@@ -211,8 +216,12 @@ async fn main() -> io::Result<()> {
     let state = web::Data::new(AppState { posts: Mutex::new(posts), posts_path, admin_password });
     let key = Key::from(session_key.as_bytes());
 
-    println!("Resume site running at http://127.0.0.1:8080");
-    println!("Blog admin at http://127.0.0.1:8080/admin");
+    let port = env::var("PORT")
+        .unwrap_or_else(|_| "8080".to_owned())
+        .parse::<u16>()
+        .map_err(|error| io::Error::other(format!("PORT must be a valid port number: {error}")))?;
+    println!("Resume site running on 0.0.0.0:{port}");
+    println!("Blog admin at /admin");
 
     HttpServer::new(move || {
         App::new()
@@ -223,6 +232,7 @@ async fn main() -> io::Result<()> {
             .service(home)
             .service(projects)
             .service(theme_script)
+            .service(health)
             .service(fhir_image)
             .service(hl7_image)
             .service(interface_image)
@@ -233,7 +243,7 @@ async fn main() -> io::Result<()> {
             .service(create_post)
             .service(logout)
     })
-        .bind(("127.0.0.1", 8080))?
+        .bind(("0.0.0.0", port))?
         .run()
         .await
 }

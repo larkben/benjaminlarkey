@@ -18,3 +18,11 @@ cargo run
 Open <http://127.0.0.1:8080>. The blog is at `/blog`; sign in at `/admin` to publish. Posts are stored in `data/blog_posts.json` and sorted by their date.
 
 Keep `.env` private; it is excluded from version control. For a deployed site, set both values in the hosting provider's secret configuration and serve the app over HTTPS. The session cookie is marked `Secure` in release builds.
+
+## Deploy on Railway
+
+Railway detects the root `Dockerfile` and builds the site as a container. Add `BLOG_ADMIN_PASSWORD` and `BLOG_SESSION_KEY` as Railway service variables; generate the session key with `openssl rand -base64 48`. Railway provides `PORT`, which the app listens on.
+
+Set the service's healthcheck path to `/health`. It returns HTTP 200 with the JSON value `true` when the app is running.
+
+Blog posts are stored in `data/blog_posts.json`. Attach a Railway volume at `/app/data` if posts created in the admin need to survive container replacements and deployments.
