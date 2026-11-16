@@ -35,17 +35,17 @@ struct NewPostForm {
 async fn home(state: web::Data<AppState>) -> impl Responder {
     let posts = read_posts(&state);
     let feed = if posts.is_empty() {
-        "<p class=\"empty-posts\">New notes will appear here.</p>".to_owned()
+        "<p class=\"empty-posts\">Awaiting the first transmission...</p>".to_owned()
     } else {
         let items = posts.iter().take(3).map(|post| {
             let title = escape_html(&post.title);
             let date = escape_html(&post.date);
             let preview = escape_html(&preview(&post.body, 150));
-            format!("<article class=\"feed-post\"><a href=\"/blog\"><h3>{title}</h3><p class=\"post-date\">{date}</p><p>{preview}</p></a></article>")
+            format!("<article class=\"feed-post\"><a href=\"/blog\"><span class=\"terminal-date\">[{date}]</span><strong>{title}</strong><span class=\"terminal-preview\">{preview}</span></a></article>")
         }).collect::<String>();
-        format!("<div class=\"post-list\">{items}</div>")
+        items
     };
-    let all_link = if posts.is_empty() { String::new() } else { "<a class=\"all-posts\" href=\"/blog\">All posts →</a>".to_owned() };
+    let all_link = if posts.is_empty() { String::new() } else { "<a class=\"all-posts\" href=\"/blog\">OPEN FULL ARCHIVE →</a>".to_owned() };
     let blog_feed_html = format!("{feed}{all_link}");
     let html = include_str!("index.html").replace("<!-- BLOG_FEED -->", &blog_feed_html);
     HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html)

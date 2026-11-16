@@ -61,12 +61,37 @@
       .contact { display: flex; flex-wrap: wrap; gap: 12px 22px; margin-top: 25px; font-size: .93rem; }
       .contact a { text-decoration-color: var(--line); text-underline-offset: 4px; }
       section { display: grid; grid-template-columns: 180px 1fr; gap: 28px; padding: 30px 0; border-top: 1px solid var(--line); }
-      .post-list { display: grid; gap: 16px; }
-      .post-link { text-decoration: none; }
-      .post-link:hover h3 { color: var(--accent); }
-      .post-link h3 { margin: 0; font-size: 1rem; }
-      .post-link p { margin: 3px 0 0; color: var(--muted); font-size: .9rem; }
-      .all-posts { display: inline-block; margin-top: 18px; color: var(--accent); font-size: .9rem; text-underline-offset: 4px; }
+      .terminal-section { grid-template-columns: 1fr; gap: 18px; margin-top: 12px; }
+      .terminal-window { overflow: hidden; border: 1px solid #294339; border-radius: 9px; background: #0b1512; color: #d7e9dc; box-shadow: 0 16px 40px rgba(18, 45, 31, .12); font: .9rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .terminal-bar { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 16px; border-bottom: 1px solid #23382e; background: #111e19; color: #96ab9d; font-size: .72rem; letter-spacing: .08em; }
+      .terminal-lights { display: flex; gap: 5px; margin-right: 4px; }
+      .terminal-lights i { width: 8px; height: 8px; border-radius: 50%; background: #466151; }
+      .terminal-lights i:first-child { background: #dd7769; }
+      .terminal-lights i:nth-child(2) { background: #d8b45d; }
+      .terminal-lights i:last-child { background: #69bd7b; }
+      .terminal-bar a { margin-left: auto; color: #83d89a; text-decoration: none; }
+      .terminal-body { padding: 19px 20px 17px; }
+      .terminal-status { margin: 0 0 14px; color: #86c996; font-size: .78rem; }
+      .terminal-status span { color: #63db85; }
+      .terminal-posts { display: grid; gap: 15px; }
+      .feed-post { display: grid; grid-template-columns: 16px 1fr; gap: 7px; animation: terminal-line .4s ease-out both; }
+      .feed-post:nth-child(2) { animation-delay: .18s; }
+      .feed-post:nth-child(3) { animation-delay: .36s; }
+      @keyframes terminal-line { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+      @media (prefers-reduced-motion: reduce) { .feed-post { animation: none; } .terminal-cursor { animation: none; } }
+      .feed-post::before { content: ">"; color: #63db85; }
+      .feed-post a { display: grid; gap: 2px; color: inherit; text-decoration: none; }
+      .feed-post a:hover strong { color: #8ef3a8; }
+      .terminal-date { color: #88a494; font-size: .76rem; }
+      .feed-post strong { color: #d7f4df; font-weight: 600; transition: color .15s ease; }
+      .terminal-preview, .empty-posts { color: #a7b9ad; font-size: .82rem; }
+      .empty-posts { margin: 0; }
+      .all-posts { display: inline-block; margin-top: 16px; color: #83d89a; font-size: .8rem; text-decoration: none; }
+      .all-posts:hover { color: #b4ffc2; }
+      .terminal-input { display: flex; flex-wrap: wrap; gap: 9px; margin: 19px 0 0; padding-top: 13px; border-top: 1px solid #23382e; color: #a7b9ad; font-size: .78rem; }
+      .terminal-input span:first-child { color: #83d89a; }
+      .terminal-cursor { color: #83d89a; animation: cursor-blink 1.1s steps(2, start) infinite; }
+      @keyframes cursor-blink { to { visibility: hidden; } }
       h2 { margin: 0; font-size: .82rem; letter-spacing: .12em; text-transform: uppercase; }
       .entry + .entry { margin-top: 28px; }
       .entry h3 { margin: 0; font-size: 1.08rem; }
@@ -77,11 +102,21 @@
       footer { padding: 22px 0 35px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
       @media (max-width: 600px) {
         .page { width: min(100% - 32px, 900px); }
-        header { align-items: flex-start; gap: 18px; flex-direction: column; }
-        nav { gap: 18px; }
+        header { align-items: flex-start; gap: 14px; flex-direction: column; padding: 20px 0; }
+        nav { width: 100%; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+        nav a { padding: 4px 0; }
+        .theme-toggle { margin-left: auto; }
         main { padding: 56px 0 64px; }
-        section { grid-template-columns: 1fr; gap: 14px; }
+        section { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
+        .intro { font-size: 1rem; }
+        .contact { gap: 10px 18px; }
+        .terminal-bar { flex-wrap: wrap; gap: 8px; padding: 10px 12px; font-size: .64rem; }
+        .terminal-bar a { margin-left: auto; }
+        .terminal-body { padding: 16px 14px; }
+        .terminal-status { font-size: .7rem; }
+        .terminal-preview { overflow-wrap: anywhere; }
       }
+      @media (max-width: 380px) { nav { gap: 8px 14px; font-size: .86rem; } .theme-toggle { margin-left: 0; } }
     </style>
   </head>
   <body>
@@ -100,7 +135,6 @@
 
       <main id="top">
         <div>
-          <p class="eyebrow"><span class="pulse" aria-hidden="true"></span>Healthcare Data · Building Systems</p>
           <h1>Benjamin Larkey</h1>
           <p class="intro">I work with healthcare data and the systems that move it—connecting clinical workflows through standards like HL7 and FHIR.</p>
           <div class="contact" id="contact">
@@ -114,14 +148,7 @@
       <section id="skills">
         <h2>Focus areas</h2>
         <div class="skills">
-          <span class="tag">HL7 v2</span><span class="tag">FHIR</span><span class="tag">Architecture Strategy</span><span class="tag">Clinical Workflows</span><span class="tag">Cloverleaf</span>
-        </div>
-      </section>
-
-      <section id="blog">
-        <h2>Writing</h2>
-        <div>
-          <!-- BLOG_FEED -->
+          <span class="tag">HL7 v2</span><span class="tag">FHIR</span><span class="tag">Architecture Strategy</span><span class="tag">Clinical Workflows</span><span class="tag">Cloverleaf</span><span class="tag">Epic Bridges</span>
         </div>
       </section>
 
@@ -131,12 +158,22 @@
           <article class="entry">
             <h3>Epic Applications Analyst / HL7 Engineer · CGH Medical Center</h3>
             <p class="meta">2024 — Present · Sterling</p>
-            <p>...</p>
+            <p> Hired on right after finishing my bachelors degree. Developed and tested the systems that led us to a successful EMR migration and Epic go-live. Today I work on optimizations and net new addons while maintaining our current infrastructure. </p>
           </article>
           <article class="entry">
             <h3>IT Tech Support · CGH Medical Center</h3>
             <p class="meta">2023 — 2024 · Sterling</p>
-            <p>...</p>
+            <p> Part time job 2 days a week working on support desk tickets and computer hardware. </p>
+          </article>
+          <article class="entry">
+            <h3>Biomed Intern · CGH Medical Center</h3>
+            <p class="meta">2023 (Summer) · Sterling</p>
+            <p> Part time job 2 days a week working with the biomedical engineering team at CGH where I built patient vitals monitors and helped support biomedical infrastructure. </p>
+          </article>
+          <article class="entry">
+            <h3>Web Developer · American Family Insurance</h3>
+            <p class="meta"> As Consulted · Sterling</p>
+            <p> As consulted helped build sites which would aggregate leads back to our insurance representatives. </p>
           </article>
         </div>
       </section>
@@ -156,6 +193,22 @@
         </div>
       </section>
 
+      <section id="blog" class="terminal-section" aria-label="Recent blog posts">
+        <div class="terminal-window">
+          <div class="terminal-bar">
+            <span class="terminal-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>HL7 INTERFACE / BLOG FEED</span>
+            <a href="/blog">OPEN BLOG ↗</a>
+          </div>
+          <div class="terminal-body">
+            <p class="terminal-status"><span>●</span> CHANNEL OPEN · RECENT TRANSMISSIONS</p>
+            <div class="terminal-posts">
+              <!-- BLOG_FEED -->
+            </div>
+            <p class="terminal-input"><span>benjamin@interop:~$</span><span>tail -f blog.log</span><span class="terminal-cursor">▌</span></p>
+          </div>
+        </div>
+      </section>
       <footer>© 2026 Benjamin Larkey</footer>
     </div>
     <script src="/theme.js" defer></script>
