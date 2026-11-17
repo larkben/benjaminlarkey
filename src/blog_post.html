@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fafbf9" />
+    <title>{{TITLE}} — Benjamin Larkey</title>
+    <script>try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
+    <style>
+      :root { color-scheme: light; --ink:#202c2a; --muted:#687773; --accent:#0066cc; --red:#d93645; --paper:#fafbf9; --line:#e2e8e4; --surface:#fff; }
+      :root[data-theme="dark"] { color-scheme:dark; --ink:#ecf3fb; --muted:#a5b2c0; --accent:#59a6ff; --red:#ff6675; --paper:#101923; --line:#2a3948; --surface:#172431; }
+      * { box-sizing:border-box; } body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+      a { color:inherit; } .page { width:min(100% - 40px,860px); margin:0 auto; }
+      header { display:flex; align-items:center; justify-content:space-between; padding:26px 0; border-bottom:1px solid var(--line); }
+      .brand { font-weight:700; letter-spacing:-.03em; text-decoration:none; } nav { display:flex; align-items:center; gap:20px; color:var(--muted); font-size:.92rem; } nav a { text-decoration:none; }
+      .theme-toggle { padding:7px 10px; border:1px solid var(--line); border-radius:5px; background:transparent; color:var(--ink); font:inherit; font-size:.82rem; cursor:pointer; }
+      main { max-width:720px; margin:0 auto; padding:70px 0 84px; } .back { color:var(--muted); font-size:.9rem; text-decoration:none; }
+      h1 { margin:24px 0 8px; font-size:clamp(2.4rem,7vw,4rem); line-height:1.08; letter-spacing:-.06em; } h1::after { display:block; width:42px; height:3px; margin-top:16px; background:linear-gradient(90deg,var(--accent) 0 72%,var(--red) 72%); content:""; }
+      time { color:var(--muted); font-size:.9rem; } .markdown { margin-top:34px; overflow-wrap:anywhere; } .markdown h2,.markdown h3 { margin:1.8em 0 .55em; line-height:1.25; letter-spacing:-.025em; } .markdown h2 { font-size:1.6rem; } .markdown h3 { font-size:1.25rem; }
+      .markdown p { margin:0 0 1.2em; } .markdown a { color:var(--accent); text-underline-offset:3px; } .markdown ul { padding-left:1.5em; margin:0 0 1.2em; } .markdown li { padding:.15em 0; }
+      .markdown blockquote { margin:1.4em 0; padding:.15em 0 .15em 1em; border-left:3px solid var(--accent); color:var(--muted); }
+      .markdown code { padding:.12em .35em; border-radius:4px; background:var(--surface); font: .9em ui-monospace,SFMono-Regular,Menlo,monospace; }
+      .markdown pre { overflow:auto; padding:16px; border:1px solid var(--line); border-radius:6px; background:var(--surface); line-height:1.5; }
+      .markdown pre code { padding:0; background:transparent; } footer { padding:22px 0 35px; border-top:1px solid var(--line); color:var(--muted); font-size:.85rem; }
+      .fractile-wrap { margin:25px 0 12px; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:#101923; box-shadow:0 12px 32px rgba(20,40,35,.1); }
+      #fractile { display:block; width:100%; height:auto; aspect-ratio: 3.6 / 1; }
+      .fractile-caption { margin:0; padding:8px 12px; color:var(--muted); font-size:.76rem; letter-spacing:.025em; }
+      @media(max-width:600px) { .page { width:min(100% - 32px,860px); } header { align-items:flex-start; gap:14px; flex-direction:column; padding:20px 0; } nav { flex-wrap:wrap; gap:10px 18px; } .theme-toggle { margin-left:auto; } main { padding:52px 0 64px; } }
+    </style>
+  </head>
+  <body><div class="page">
+    <header><a class="brand" href="/">Benjamin Larkey</a><nav aria-label="Main navigation"><a href="/projects">Projects</a><a href="/">Resume</a><a href="/blog">Blog</a><button class="theme-toggle" type="button" aria-label="Switch color theme">☾ Dark mode</button></nav></header>
+    <main><a class="back" href="/blog">← All writing</a><article><h1>{{TITLE}}</h1><div class="fractile-wrap"><canvas id="fractile" role="img" aria-label="A colorful Mandelbrot landscape generated for your local date and time"></canvas><p class="fractile-caption" id="fractile-caption">Generating today’s fractal landscape…</p></div><time>{{DATE}}</time><div class="markdown">{{BODY}}</div></article></main>
+    <footer>© 2026 Benjamin Larkey</footer>
+  </div><script src="/theme.js" defer></script>
+  <script>
+    (() => {
+      const canvas = document.getElementById("fractile");
+      const context = canvas.getContext("2d", { alpha: false });
+      const now = new Date();
+      const palettes = [
+        [[14, 28, 55], [43, 103, 151], [247, 185, 115], [255, 226, 166]],
+        [[22, 35, 67], [77, 95, 160], [221, 133, 147], [255, 212, 179]],
+        [[15, 51, 62], [31, 133, 133], [228, 186, 109], [255, 230, 161]],
+        [[34, 29, 63], [103, 72, 148], [224, 119, 137], [255, 205, 150]],
+        [[20, 47, 48], [61, 119, 96], [210, 166, 99], [244, 224, 173]],
+        [[27, 36, 61], [77, 121, 161], [207, 145, 119], [255, 218, 169]],
+        [[34, 39, 75], [105, 89, 153], [219, 142, 174], [255, 216, 193]]
+      ];
+      const palette = palettes[now.getDay()];
+      const displayWidth = Math.max(1, Math.round(canvas.getBoundingClientRect().width));
+      const displayHeight = Math.max(1, Math.round(displayWidth / 3.6));
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.round(displayWidth * pixelRatio);
+      const height = Math.round(displayHeight * pixelRatio);
+      canvas.width = width;
+      canvas.height = height;
+      canvas.style.height = `${displayHeight}px`;
+      const image = context.createImageData(width, height);
+      const pixels = image.data;
+      // Fresh view coordinates on every load; weekday still controls the palette.
+      const random = (min, max) => min + Math.random() * (max - min);
+      // Pick from visually distinct landmarks so refreshes change the composition,
+      // not just a few pixels of the same broad Mandelbrot view.
+      const scenes = [
+        { name: "The great divide", x: -0.52, y: 0.0, zoom: [0.72, 1.05] },
+        { name: "Seahorse valley", x: -0.748, y: 0.102, zoom: [2.2, 5.5] },
+        { name: "Elephant valley", x: 0.285, y: 0.008, zoom: [2.0, 4.8] },
+        { name: "Spiral garden", x: -0.088, y: 0.654, zoom: [12, 38] },
+        { name: "Filament coast", x: -0.7436, y: 0.1318, zoom: [18, 64] },
+        { name: "Feathered edge", x: -1.25, y: 0.0, zoom: [2.4, 7.5] },
+        { name: "The upper reach", x: -0.16, y: 1.035, zoom: [2.4, 8] }
+      ];
+      const scene = scenes[Math.floor(Math.random() * scenes.length)];
+      const zoom = random(scene.zoom[0], scene.zoom[1]);
+      const centerX = scene.x + random(-0.018, 0.018) / zoom;
+      const centerY = scene.y + random(-0.018, 0.018) / zoom;
+      const maxIterations = Math.round(82 + Math.random() * 70);
+      for (let py = 0; py < height; py++) {
+        const imaginary = centerY + ((py / height) - 0.5) * 2.1 / zoom;
+        for (let px = 0; px < width; px++) {
+          const real = centerX + ((px / width) - 0.5) * 3.45 / zoom;
+          let zr = 0, zi = 0, iteration = 0;
+          while (zr * zr + zi * zi <= 256 && iteration < maxIterations) {
+            const next = zr * zr - zi * zi + real;
+            zi = 2 * zr * zi + imaginary;
+            zr = next;
+            iteration++;
+          }
+          const offset = (py * width + px) * 4;
+          if (iteration === maxIterations) {
+            pixels[offset] = palette[0][0] * 0.52;
+            pixels[offset + 1] = palette[0][1] * 0.52;
+            pixels[offset + 2] = palette[0][2] * 0.52;
+          } else {
+            const magnitude = Math.sqrt(zr * zr + zi * zi);
+            const smooth = iteration + 1 - Math.log2(Math.max(1, Math.log2(magnitude)));
+            const band = (smooth * 0.105) % 1;
+            const segment = band * (palette.length - 1);
+            const index = Math.min(palette.length - 2, Math.floor(segment));
+            const mix = segment - index;
+            for (let channel = 0; channel < 3; channel++) {
+              pixels[offset + channel] = palette[index][channel] * (1 - mix) + palette[index + 1][channel] * mix;
+            }
+          }
+          pixels[offset + 3] = 255;
+        }
+      }
+      context.putImageData(image, 0, 0);
+      const day = new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(now);
+      const time = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(now);
+      document.getElementById("fractile-caption").textContent = `${scene.name} · a new view for ${day}, ${time}`;
+    })();
+  </script></body>
+</html>

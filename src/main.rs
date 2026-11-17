@@ -1,4 +1,4 @@
-use std::{env, fs, io, path::PathBuf, sync::Mutex};
+use std::{env, fs, io, path::{Path, PathBuf}, sync::Mutex};
 
 use actix_session::{Session, SessionMiddleware, storage::CookieSessionStore};
 use actix_web::{
@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
 struct Post {
+    #[serde(default)]
+    slug: String,
     title: String,
     date: String,
     body: String,
@@ -15,7 +17,7 @@ struct Post {
 
 struct AppState {
     posts: Mutex<Vec<Post>>,
-    posts_path: PathBuf,
+    posts_dir: PathBuf,
     admin_password: String,
 }
 
@@ -41,7 +43,7 @@ async fn home(state: web::Data<AppState>) -> impl Responder {
             let title = escape_html(&post.title);
             let date = escape_html(&post.date);
             let preview = escape_html(&preview(&post.body, 150));
-            format!("<article class=\"feed-post\"><a href=\"/blog\"><span class=\"terminal-date\">[{date}]</span><strong>{title}</strong><span class=\"terminal-preview\">{preview}</span></a></article>")
+            format!("<article class=\"feed-post\"><a href=\"/blog/{}\"><span class=\"terminal-date\">[{date}]</span><strong>{title}</strong><span class=\"terminal-preview\">{preview}</span></a></article>", escape_html(&post.slug))
         }).collect::<String>();
         items
     };
@@ -91,9 +93,25 @@ async fn blog() -> impl Responder {
     let rendered_posts = if posts.is_empty() {
         "<p>No posts yet. Check back soon.</p>".to_owned()
     } else {
-        posts.iter().map(render_post).collect::<String>()
+        posts.iter().map(render_post_card).collect::<String>()
     };
     let html = include_str!("blog.html").replace("{{POSTS}}", &rendered_posts);
+    HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html)
+}
+
+#[get("/blog/{slug}")]
+async fn blog_post(path: web::Path<String>) -> impl Responder {
+    let slug = path.into_inner();
+    let posts = read_posts_from_file();
+    let Some(post) = posts.iter().find(|post| post.slug == slug) else {
+        return HttpResponse::NotFound().content_type("text/html; charset=utf-8")
+            .body("<!doctype html><title>Post not found</title><p>That post could not be found. <a href='/blog'>Return to the blog</a>.</p>");
+    };
+    let body = render_markdown(&post.body);
+    let html = include_str!("blog_post.html")
+        .replace("{{TITLE}}", &escape_html(&post.title))
+        .replace("{{DATE}}", &escape_html(&post.date))
+        .replace("{{BODY}}", &body);
     HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html)
 }
 
@@ -117,7 +135,7 @@ async fn admin(session: Session, state: web::Data<AppState>) -> impl Responder {
       <form method="post" action="/admin/posts">
         <label>Title<input name="title" maxlength="120" required /></label>
         <label>Date<input name="date" type="date" required /></label>
-        <label>Post<textarea name="body" rows="9" required></textarea></label>
+      <label>Post <span class="muted">Markdown supported: # headings, **bold**, *italic*, `code`, [links](https://…), - lists, and &gt; quotes.</span><textarea name="body" rows="12" required></textarea></label>
         <button type="submit">Publish post</button>
       </form>
       <h2>Published posts</h2><ul class="post-list">{post_list}</ul>
@@ -169,15 +187,16 @@ async fn create_post(form: web::Form<NewPostForm>, session: Session, state: web:
     if title.is_empty() || body.is_empty() {
         return HttpResponse::BadRequest().body("Title and post text are required.");
     }
-    let post = Post { title: title.to_owned(), date: form.date.clone(), body: body.to_owned() };
+    let mut post = Post { slug: String::new(), title: title.to_owned(), date: form.date.clone(), body: body.to_owned() };
     let mut posts = match state.posts.lock() {
         Ok(posts) => posts,
         Err(_) => return HttpResponse::InternalServerError().finish(),
     };
     let mut updated_posts = posts.clone();
-    updated_posts.push(post);
+    post.slug = unique_slug(&post.date, &post.title, &updated_posts);
+    updated_posts.push(post.clone());
     updated_posts.sort_by(|a, b| b.date.cmp(&a.date));
-    if let Err(error) = save_posts(&state.posts_path, &updated_posts) {
+    if let Err(error) = save_post(&state.posts_dir, &post) {
         return HttpResponse::InternalServerError().body(format!("Could not save post: {error}"));
     }
     *posts = updated_posts;
@@ -205,15 +224,11 @@ async fn main() -> io::Result<()> {
         return Err(io::Error::other("BLOG_SESSION_KEY must be at least 64 bytes."));
     }
 
-    let posts_path = PathBuf::from("data/blog_posts.json");
-    if let Some(parent) = posts_path.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    if !posts_path.exists() {
-        fs::write(&posts_path, "[]")?;
-    }
-    let posts = load_posts(&posts_path);
-    let state = web::Data::new(AppState { posts: Mutex::new(posts), posts_path, admin_password });
+    let posts_dir = PathBuf::from("data");
+    fs::create_dir_all(&posts_dir)?;
+    let legacy_json = posts_dir.join("blog_posts.json");
+    let posts = load_posts(&posts_dir, &legacy_json)?;
+    let state = web::Data::new(AppState { posts: Mutex::new(posts), posts_dir, admin_password });
     let key = Key::from(session_key.as_bytes());
 
     let port = env::var("PORT")
@@ -237,6 +252,7 @@ async fn main() -> io::Result<()> {
             .service(hl7_image)
             .service(interface_image)
             .service(blog)
+            .service(blog_post)
             .service(admin)
             .service(login_page)
             .service(login)
@@ -261,20 +277,68 @@ fn read_posts(state: &web::Data<AppState>) -> Vec<Post> {
 }
 
 fn read_posts_from_file() -> Vec<Post> {
-    let path = PathBuf::from("data/blog_posts.json");
-    load_posts(&path)
+    let directory = PathBuf::from("data");
+    load_posts(&directory, &directory.join("blog_posts.json")).unwrap_or_default()
 }
 
-fn load_posts(path: &PathBuf) -> Vec<Post> {
-    fs::read_to_string(path).ok()
-        .and_then(|contents| serde_json::from_str::<Vec<Post>>(&contents).ok())
-        .map(|mut posts| { posts.sort_by(|a, b| b.date.cmp(&a.date)); posts })
-        .unwrap_or_default()
+fn load_posts(directory: &Path, legacy_json: &Path) -> io::Result<Vec<Post>> {
+    let mut posts = Vec::new();
+    for entry in fs::read_dir(directory)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().and_then(|extension| extension.to_str()) != Some("md") { continue; }
+        if let Ok(contents) = fs::read_to_string(path) {
+            if let Some(post) = parse_markdown_post(&contents) { posts.push(post); }
+        }
+    }
+    // Migrate the existing JSON archive once, retaining it as a backup.
+    if posts.is_empty() {
+        let legacy_posts = fs::read_to_string(legacy_json).ok()
+            .and_then(|contents| serde_json::from_str::<Vec<Post>>(&contents).ok())
+            .unwrap_or_default();
+        posts = legacy_posts;
+    }
+    posts.sort_by(|a, b| b.date.cmp(&a.date));
+    let mut used: Vec<String> = Vec::new();
+    for index in 0..posts.len() {
+        let post = &posts[index];
+        if post.slug.trim().is_empty() || used.contains(&post.slug) {
+            let base = format!("{}-{}", slugify(&post.date), slugify(&post.title));
+            let base = base.trim_matches('-').to_owned();
+            let base = if base.is_empty() { "post".to_owned() } else { base };
+            let mut candidate = base.clone(); let mut suffix = 2;
+            while used.contains(&candidate) { candidate = format!("{base}-{suffix}"); suffix += 1; }
+            posts[index].slug = candidate;
+        }
+        used.push(posts[index].slug.clone());
+    }
+    let has_markdown_posts = fs::read_dir(directory)?.filter_map(Result::ok)
+        .any(|entry| entry.path().extension().and_then(|e| e.to_str()) == Some("md"));
+    if !has_markdown_posts {
+        for post in &posts { save_post(directory, post)?; }
+    }
+    Ok(posts)
 }
 
-fn save_posts(path: &PathBuf, posts: &[Post]) -> io::Result<()> {
-    let json = serde_json::to_vec_pretty(posts).map_err(io::Error::other)?;
-    fs::write(path, json)
+fn save_post(directory: &Path, post: &Post) -> io::Result<()> {
+    let title = serde_json::to_string(&post.title).map_err(io::Error::other)?;
+    let date = serde_json::to_string(&post.date).map_err(io::Error::other)?;
+    let slug = serde_json::to_string(&post.slug).map_err(io::Error::other)?;
+    let contents = format!("---\ntitle: {title}\ndate: {date}\nslug: {slug}\n---\n\n{}\n", post.body);
+    fs::write(directory.join(format!("{}.md", post.slug)), contents)
+}
+
+fn parse_markdown_post(contents: &str) -> Option<Post> {
+    let rest = contents.strip_prefix("---\n")?;
+    let (front_matter, body) = rest.split_once("\n---\n")?;
+    let mut title = None; let mut date = None; let mut slug = None;
+    for line in front_matter.lines() {
+        let (key, value) = line.split_once(':')?;
+        let value = value.trim();
+        let parsed = serde_json::from_str::<String>(value).unwrap_or_else(|_| value.trim_matches('"').to_owned());
+        match key.trim() { "title" => title = Some(parsed), "date" => date = Some(parsed), "slug" => slug = Some(parsed), _ => {} }
+    }
+    Some(Post { title: title?, date: date?, slug: slug.unwrap_or_default(), body: body.strip_prefix('\n').unwrap_or(body).trim_end().to_owned() })
 }
 
 fn preview(text: &str, max_chars: usize) -> String {
@@ -288,9 +352,89 @@ fn escape_html(value: &str) -> String {
         .replace('"', "&quot;").replace('\'', "&#39;")
 }
 
-fn render_post(post: &Post) -> String {
-    format!("<article class=\"post\"><time>{}</time><h2>{}</h2><p>{}</p></article>",
-        escape_html(&post.date), escape_html(&post.title), escape_html(&post.body))
+fn slugify(value: &str) -> String {
+    let mut slug = String::new();
+    let mut dash = false;
+    for ch in value.chars().flat_map(char::to_lowercase) {
+        if ch.is_ascii_alphanumeric() { slug.push(ch); dash = false; }
+        else if !dash && !slug.is_empty() { slug.push('-'); dash = true; }
+    }
+    slug.trim_matches('-').to_owned()
+}
+
+fn unique_slug(date: &str, title: &str, posts: &[Post]) -> String {
+    let base = format!("{}-{}", slugify(date), slugify(title)).trim_matches('-').to_owned();
+    let base = if base.is_empty() { "post".to_owned() } else { base };
+    let mut candidate = base.clone();
+    let mut index = 2;
+    while posts.iter().any(|post| post.slug == candidate) {
+        candidate = format!("{base}-{index}");
+        index += 1;
+    }
+    candidate
+}
+
+fn render_post_card(post: &Post) -> String {
+    let title = escape_html(&post.title);
+    let date = escape_html(&post.date);
+    let summary = escape_html(&preview(&post.body, 180));
+    format!("<article class=\"post\" data-search=\"{}\"><time>{date}</time><h2><a href=\"/blog/{}\">{title}</a></h2><p>{summary}</p><a class=\"read-more\" href=\"/blog/{}\">Read post →</a></article>", escape_html(&format!("{} {} {}", post.title, post.date, post.body).to_lowercase()), escape_html(&post.slug), escape_html(&post.slug))
+}
+
+fn render_markdown(source: &str) -> String {
+    let mut html = String::new();
+    let mut paragraph = Vec::new();
+    let mut in_list = false;
+    let mut in_code = false;
+    let flush_paragraph = |html: &mut String, lines: &mut Vec<String>| {
+        if !lines.is_empty() { html.push_str(&format!("<p>{}</p>", render_inline(&lines.join(" ")))); lines.clear(); }
+    };
+    for line in source.lines() {
+        if line.trim_start().starts_with("```") {
+            flush_paragraph(&mut html, &mut paragraph);
+            if in_list { html.push_str("</ul>"); in_list = false; }
+            if in_code { html.push_str("</code></pre>"); } else { html.push_str("<pre><code>"); }
+            in_code = !in_code;
+            continue;
+        }
+        if in_code { html.push_str(&escape_html(line)); html.push('\n'); continue; }
+        let trimmed = line.trim();
+        if trimmed.is_empty() { flush_paragraph(&mut html, &mut paragraph); if in_list { html.push_str("</ul>"); in_list = false; } continue; }
+        let heading_level = trimmed.chars().take_while(|c| *c == '#').count();
+        if heading_level > 0 && heading_level <= 6 && trimmed[heading_level..].starts_with(' ') {
+            flush_paragraph(&mut html, &mut paragraph); if in_list { html.push_str("</ul>"); in_list = false; }
+            html.push_str(&format!("<h{heading_level}>{}</h{heading_level}>", render_inline(trimmed[heading_level..].trim())));
+        } else if let Some(quote) = trimmed.strip_prefix("> ") {
+            flush_paragraph(&mut html, &mut paragraph); if in_list { html.push_str("</ul>"); in_list = false; }
+            html.push_str(&format!("<blockquote><p>{}</p></blockquote>", render_inline(quote)));
+        } else if let Some(item) = trimmed.strip_prefix("- ").or_else(|| trimmed.strip_prefix("* ")) {
+            flush_paragraph(&mut html, &mut paragraph); if !in_list { html.push_str("<ul>"); in_list = true; }
+            html.push_str(&format!("<li>{}</li>", render_inline(item)));
+        } else { if in_list { html.push_str("</ul>"); in_list = false; } paragraph.push(trimmed.to_owned()); }
+    }
+    flush_paragraph(&mut html, &mut paragraph);
+    if in_list { html.push_str("</ul>"); }
+    if in_code { html.push_str("</code></pre>"); }
+    html
+}
+
+fn render_inline(source: &str) -> String {
+    let mut out = String::new();
+    let chars: Vec<char> = source.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i..].starts_with(&['*','*']) {
+            if let Some(end) = (i + 2..chars.len().saturating_sub(1)).find(|&j| chars[j..].starts_with(&['*','*'])) {
+                out.push_str("<strong>"); out.push_str(&escape_html(&chars[i+2..end].iter().collect::<String>())); out.push_str("</strong>"); i = end + 2; continue;
+            }
+        }
+        let ch = chars[i];
+        if ch == '`' { if let Some(end) = chars[i+1..].iter().position(|c| *c == '`').map(|p| i+1+p) { out.push_str("<code>"); out.push_str(&escape_html(&chars[i+1..end].iter().collect::<String>())); out.push_str("</code>"); i=end+1; continue; } }
+        if ch == '*' || ch == '_' { if let Some(end) = chars[i+1..].iter().position(|c| *c == ch).map(|p| i+1+p) { out.push_str("<em>"); out.push_str(&escape_html(&chars[i+1..end].iter().collect::<String>())); out.push_str("</em>"); i=end+1; continue; } }
+        if ch == '[' { if let Some(close) = chars[i+1..].iter().position(|c| *c == ']').map(|p| i+1+p) { if close+1 < chars.len() && chars[close+1] == '(' { if let Some(end) = chars[close+2..].iter().position(|c| *c == ')').map(|p| close+2+p) { let label = escape_html(&chars[i+1..close].iter().collect::<String>()); let url = chars[close+2..end].iter().collect::<String>(); if url.starts_with("https://") || url.starts_with("http://") || url.starts_with("mailto:") { out.push_str(&format!("<a href=\"{}\" rel=\"noopener noreferrer\">{label}</a>", escape_html(&url))); i=end+1; continue; } } } } }
+        out.push_str(&escape_html(&ch.to_string())); i += 1;
+    }
+    out
 }
 
 fn admin_page(content: &str) -> String {
